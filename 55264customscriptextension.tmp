@@ -1,0 +1,40 @@
+
+$AzureStorageAccountName = "Azure\" + $StorageAccountName
+$SecureKey = $StorageAccountKey | ConvertTo-SecureString -AsPlainText -Force
+$Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $AzureStorageAccountName,$SecureKey
+$RootURL = "\\" + $StorageAccountName + ".file.core.windows.net\" + $FileShareName
+New-PSDrive -Name S -PSProvider FileSystem -Root $RootURL -Credential $Credential
+Copy-Item "S:\55264a-enu_setupfiles.zip" -Destination $WorkFolder -Recurse -Verbose -Force
+Copy-Item "S:\55264customscriptextension.ps1" -Destination $WorkFolder -Recurse -Verbose -Force
+
+# Configure Remote Connection Settings
+Net LocalGroup "Remote Management Users" /Add Adminz
+Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Force
+Get-NetFirewallRule *WINRM* | Set-NetFirewallRule -Profile Any -RemoteAddress Any -Enabled True
+Get-NetFirewallRule *RemoteDesktop* | Set-NetFirewallRule -Profile Any -RemoteAddress Any -Enabled True
+Enable-PSRemoting -SkipNetworkProfileCheck -Force
+Set-WSManQuickConfig -Force
+
+# Configure Lab Environment
+New-Item -Path c:\labfiles.55264a -Type Directory -Force
+New-Item -Path c:\temp -Type Directory -Force
+New-Item -Path C:\CustomScriptExtension -Type Directory -Force
+$SetupFile = "c:\labfiles.55264a\55264A-ENU_SetupFiles.zip"
+$LabfilesFolder = "c:\labfiles.55264a\"
+[Environment]::SetEnvironmentVariable("LABFILESFOLDER", $LabfilesFolder, "Machine")
+[Environment]::SetEnvironmentVariable("WORKFOLDER", $LabfilesFolder, "Machine")
+Install-PackageProvider -Name "PowerShellGet" -Force
+Install-PackageProvider -Name "Nuget" -Force
+Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+Expand-Archive -LiteralPath $SetupFile -DestinationPath $LabfilesFolder -Force
+Get-ChildItem -Recurse $LabfilesFolder | Unblock-File
+$SQLServerConfig = $LabfilesFolder + "SQLServerConfig.sql"
+(Get-Content $SQLServerConfig) -Replace "vm55264srv",$env:COMPUTERNAME | Out-File -FilePath $SQLServerConfig
+$RunCMD = $LabfilesFolder + "run.cmd"
+(Get-Content $RunCMD) -Replace "vm55264srv",$env:COMPUTERNAME | Out-File -FilePath $RunCMD -Encoding ASCII
+Enable-NetFirewallRule -DisplayName "File and Printer Sharing*"
+#   Get-DNSClient -InterfaceAlias Ethernet* | Set-DNSClient -ConnectionSpecificSuffix "contoso.com"
+#   Get-DNSClient -InterfaceAlias Ethernet* | Set-DNSClientServerAddress -ServerAddresses ("192.168.10.100","192.168.20.100")
+reg import c:\labfiles.55264a\LocalLogonAdminz.reg
+REG ADD HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce /d c:\labfiles.55264a\run.cmd /f
+shutdown /r /t 15
