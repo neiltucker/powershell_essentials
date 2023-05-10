@@ -1,10 +1,11 @@
-#  These are the commands for Exercise 1 in Appendix B
+#  PowerShell Essentials: Exercise 1
 
 Get-Command
 Get-Help | More
 Get-Help Get-WmiObject -Detail | More
 Get-Help *about*
 Get-Help About_Scripts | More
+
 CD ~; Cls; Dir
 Get-Alias CD; Get-Alias Cls; Get-Alias Dir
 Get-WmiObject Win32_NetworkAdapterConfiguration
@@ -14,8 +15,8 @@ Get-WmiObject -Query "Select * From Win32_NetworkAdapterConfiguration" | Format-
 Get-WmiObject Win32_ComputerSystem | Format-Table Name,Domain,TotalPhysicalMemory
 Get-WmiObject Win32_ComputerSystem | Format-Table Name,Domain,TotalPhysicalMemory
 Set-Location HKLM:\Software; Dir; Set-Location C:
-New-Item ñPath c:\temp\tmp ñtype directory
-New-Item ñPath c:\temp\tmp\test.txt ñtype file
+New-Item ‚ÄìPath c:\temp\tmp ‚Äìtype directory
+New-Item ‚ÄìPath c:\temp\tmp\test.txt ‚Äìtype file
 Set-Alias Copy-Con Set-Content
-Copy-Con test.txt ìThis is a testî
+Copy-Con test.txt ‚ÄúThis is a test‚Äù
 Type test.txt
